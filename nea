@@ -1,0 +1,350 @@
+import pygame, soundCode, splashScreen, settingsScreen, HowToPlayScreen, playerSelect, gameScreen, math
+
+class Screen:
+    def __init__(self):
+        self.screen_display = pygame.display.set_mode((600, 338))
+        pygame.display.set_caption("Pixel Parkour")                 
+        self.running = True
+        self.clock = pygame.time.Clock()
+        self.image_count = 0
+        self.fps = 27
+        self.screen_status = "Start Screen"
+        self.back_button_rect = pygame.Rect(18,285,51,46)
+        self.controls = "WASD"
+        self.music = "On"
+
+        # Initialize objects for each screen
+        self.screens = {
+            "splash": splashScreen.splashDisplay(),
+            "settings": settingsScreen.settingsDisplay(),
+            "how_to_play": HowToPlayScreen.HowToPlayDisplay(),
+            "select_player": playerSelect.playerSelectDisplay(),
+            "game": gameScreen.gameDisplay()
+        }
+
+        # Get screen size and background size        
+        self.screen_size = self.screen_display.get_size()
+        self.bg_size = self.screens["game"].bg.get_size()
+        self.bg_x = 0
+
+
+        
+    # Display splash screen
+    def splashScreen(self):    
+        if self.image_count >= 100:
+            self.image_count = 0
+        self.screen_display.blit(self.screens["splash"].bg[self.image_count//2], (0,0))
+        self.image_count+=1
+        
+        self.screen_display.blit(self.screens["splash"].splashTitle, (0,0))
+        self.screen_display.blit(self.screens["splash"].splashSettings, (0,0))
+        self.screen_display.blit(self.screens["splash"].splashStart, (0,0))
+        self.screen_display.blit(self.screens["splash"].splashHowToPlay, (0,0))
+          
+    # Display settings screen
+    def settingsScreen(self):
+        self.screen_display.blit(self.screens["settings"].settingsBackground, (0,0))
+        self.screen_display.blit(self.screens["settings"].playerControls, (0,0))
+        self.screen_display.blit(self.screens["settings"].musicControls, (0,0))
+        
+    # Display selected player controls
+        if self.controls == "WASD":
+            self.screen_display.blit(self.screens["settings"].controlsWASD, (0,0))
+        elif self.controls == "Arrows":
+            self.screen_display.blit(self.screens["settings"].controlsArrows, (0,0))
+
+    # Display selected music setting
+        if self.music == "On":
+            self.screen_display.blit(self.screens["settings"].musicOn, (0,0))
+        elif self.music == "Off":
+            self.screen_display.blit(self.screens["settings"].musicOff, (0,0))
+        
+    # Display how-to-play screen
+    def how_to_playScreen(self):
+        self.screen_display.blit(self.screens["how_to_play"].HowToPlayBackground, (0,0))
+    
+    # Display player select screen
+    def playerSelectScreen(self):
+        self.screen_display.blit(self.screens["select_player"].playerSelectBackground, (0,0))
+ 
+        self.player1Selected = False
+        self.player2Selected = False
+
+    # Display game screen
+    
+    def gameScreen(self):
+        self.fps = 60
+        if self.bg_x <= (-1200):
+            self.bg_x = 0
+
+        # Draw background
+        self.screen_display.blit(self.screens["game"].bg, (self.bg_x, 0))
+        self.rect = pygame.Rect(0,312,600,30)
+        
+        
+                  
+        
+#soundCode.gameSounds.backgroundSound()      
+screen = Screen()
+
+class Characters:
+    def __init__(self):
+        # Initialize player position
+        self.x_position, self.y_position = 0,0
+        
+        # Initialize player state flags
+        self.jumping = False
+        self.walk_right = False
+        self.walk_left = False
+        self.idle = False
+        self.rolling = False
+        self.punching = False
+        
+        # Initialize player physics parameters
+        self.y_gravity = 0
+        self.jump_height = 0
+        self.y_velocity = self.jump_height
+        self.walk_count = 0
+        self.x_velocity = 0
+        
+        # Initialize player animation counters
+        self.walk_count = 0
+        self.roll_count = 0
+        self.punch_count = 0
+        
+        
+        self.walk_right_img = None
+        self.walk_left_img = None
+        self.idle_img = None
+        self.rollingR_img = None
+        self.rollingL_img = None
+        self.punchingR_img = None
+        self.punchingL_img = None
+
+    
+    def movement(self, screen):
+        if self.walk_count + 1 >= 60:
+            self.walk_count = 0
+        
+        if self.roll_count + 1 >= 15:
+            self.roll_count = 0
+        
+
+        # Draw player
+        if self.jumping:
+                
+            if self.walk_left:
+                screen.screen_display.blit(screen.screens["game"].self.walk_left_img[self.walk_count//10], (self.x_position,self.y_position))
+                self.y_position -= self.y_velocity
+                self.y_velocity -= self.y_gravity
+                if self.y_velocity < -self.jump_height:
+                    self.jumping = False
+                    self.y_velocity = self.jump_height
+                #screen.player_rect = screen.screens["game"].self.walk_left_img[self.walk_count//10].get_rect(center=(self.x_position, self.y_position))
+                
+            else:
+                screen.screen_display.blit(screen.screens["game"].self.walk_right_img[self.walk_count//10], (self.x_position,self.y_position))
+                self.y_position -= self.y_velocity
+                self.y_velocity -= self.y_gravity
+                if self.y_velocity < -self.jump_height:
+                    self.jumping = False
+                    self.y_velocity = self.jump_height
+                #screen.player_rect =screen.screens["game"].self.walk_right_img[self.walk_count//10].get_rect(center=(self.x_position, self.y_position))
+
+        
+        if self.jumping == False:
+            
+                                
+            if self.walk_right:
+                if self.punching:
+                    screen.screen_display.blit(screen.screens["game"].self.punchingR_img[self.punch_count//5], (self.x_position,self.y_position))
+                    self.punch_count += 1
+                    if self.punch_count + 1 >= 25:
+                        self.punching = False
+                        self.punch_count = 0
+                elif self.rolling:
+                    screen.screen_display.blit(screen.screens["game"].self.rollingR_img[self.roll_count//5],(self.x_position, self.y_position + 26))
+                    self.roll_count +=1
+                else:
+                    
+                    screen.screen_display.blit(screen.screens["game"].self.walk_right_img[self.walk_count//10], (self.x_position,self.y_position))
+
+                    self.walk_count += 1
+            elif self.walk_left:
+                if self.punching:
+                    screen.screen_display.blit(screen.screens["game"].self.punchingL_img[self.punch_count//5], (self.x_position,self.y_position))
+                    self.punch_count += 1
+                    if self.punch_count + 1 >= 25:
+                        self.punching = False
+                        self.punch_count = 0
+                elif self.rolling:
+                    screen.screen_display.blit(screen.screens["game"].self.rollingL_img[self.roll_count//5],(self.x_position, self.y_position + 26))
+                    self.roll_count +=1
+                else:
+                    screen.screen_display.blit(screen.screens["game"].self.walk_left_img[self.walk_count//10], (self.x_position,self.y_position))
+                    self.walk_count += 1
+
+            elif self.punching:
+                self.idle = False
+                screen.screen_display.blit(screen.screens["game"].self.punchingR_img[self.punch_count//5], (self.x_position,self.y_position))
+                self.punch_count += 1
+                if self.punch_count + 1 >= 25:
+                    self.punching = False
+                    self.punch_count = 0
+                                
+        if self.idle == True and self.jumping == False:
+            screen.screen_display.blit(screen.screens["game"].idle_img, (self.x_position,self.y_position))
+            
+            
+class Player(Characters):
+    def __init__(self):
+        super().__init__()
+        # Initialize player position
+        self.x_position, self.y_position = 50,250
+
+        
+        # Initialize player physics parameters
+        self.y_gravity = 0.5
+        self.jump_height = 10
+        self.y_velocity = self.jump_height
+        self.x_velocity = 3
+        
+        self.walk_right_img = [pygame.image.load("Images/Game/R1.png"), pygame.image.load("Images/Game/R2.png"), pygame.image.load("Images/Game/R3.png"), pygame.image.load("Images/Game/R4.png"), pygame.image.load("Images/Game/R5.png"), pygame.image.load("Images/Game/R6.png")]
+        self.walk_left_img = [pygame.image.load("Images/Game/L1.png"), pygame.image.load("Images/Game/L2.png"), pygame.image.load("Images/Game/L3.png"), pygame.image.load("Images/Game/L4.png"), pygame.image.load("Images/Game/L5.png"), pygame.image.load("Images/Game/L6.png")]
+        self.jumping_img = pygame.image.load("Images/Game/Jump.png")
+        self.idle_img = pygame.image.load("Images/Game/idle.png")
+        self.rollingR_img = [pygame.image.load("Images/Game/FR1.png"), pygame.image.load("Images/Game/FR2.png"), pygame.image.load("Images/Game/FR3.png")]
+        self.rollingL_img = [pygame.image.load("Images/Game/LR1.png"), pygame.image.load("Images/Game/LR2.png"), pygame.image.load("Images/Game/LR3.png")]
+        self.punchingR_img = [pygame.image.load("Images/Game/PR1.png"), pygame.image.load("Images/Game/PR2.png"), pygame.image.load("Images/Game/PR3.png"), pygame.image.load("Images/Game/PR2.png"), pygame.image.load("Images/Game/PR1.png")]
+        self.punchingL_img = [pygame.image.load("Images/Game/PL1.png"), pygame.image.load("Images/Game/PL2.png"), pygame.image.load("Images/Game/PL3.png"), pygame.image.load("Images/Game/PL2.png"), pygame.image.load("Images/Game/PL1.png")]
+
+            
+            
+
+def mainGame(screen):
+    player = Player()
+    while screen.running == True:
+        screen.clock.tick(screen.fps)
+        for screen.event in pygame.event.get():
+            if screen.event.type == pygame.QUIT:
+                screen.running = False
+                
+            if screen.event.type == pygame.MOUSEBUTTONDOWN:
+                if screen.screen_status == "Start Screen":
+                    start_buttons = {
+                        "start": pygame.Rect(191,157,218,23),
+                        "settings": pygame.Rect(246,195,107,15),
+                        "how_to_play": pygame.Rect(228,227,144,15)
+                    }
+                    
+                    if start_buttons["start"].collidepoint(screen.event.pos):
+                        screen.screen_status = "Player Select"
+                    elif start_buttons["settings"].collidepoint(screen.event.pos):
+                        screen.screen_status = "Settings Screen"
+                    elif start_buttons["how_to_play"].collidepoint(screen.event.pos):
+                        screen.screen_status = "How To Play Screen"
+                    
+                elif screen.screen_status == "Settings Screen":
+                    settings_buttons = {
+                        "playerControlsR": pygame.Rect(483,95,40,40),
+                        "playerControlsL": pygame.Rect(288,96,40,40),
+                        "musicControlsR": pygame.Rect(288.5,157.5,40,40),
+                        "musicControlsL": pygame.Rect(481.5,155.5,40,40)
+                    }
+
+                    if settings_buttons["playerControlsR"].collidepoint(screen.event.pos) and screen.controls == "WASD" or settings_buttons["playerControlsL"].collidepoint(screen.event.pos) and screen.controls == "WASD":
+                        screen.controls = "Arrows"
+                    elif settings_buttons["playerControlsR"].collidepoint(screen.event.pos) and screen.controls == "Arrows" or settings_buttons["playerControlsL"].collidepoint(screen.event.pos) and screen.controls == "Arrows":
+                        screen.controls = "WASD"
+                    elif settings_buttons["musicControlsR"].collidepoint(screen.event.pos) and screen.music == "On" or settings_buttons["musicControlsL"].collidepoint(screen.event.pos) and screen.music == "On":
+                        screen.music = "Off"
+                    elif settings_buttons["musicControlsL"].collidepoint(screen.event.pos) and screen.music == "Off" or settings_buttons["musicControlsR"].collidepoint(screen.event.pos) and screen.music == "Off":
+                        screen.music = "On"
+
+                elif screen.screen_status == "Player Select":
+                    player_buttons = {
+                        "player1": pygame.Rect(104,101,153,200),
+                        "player2": pygame.Rect(344,101,153,200)
+                    }
+                    
+                    if player_buttons["player1"].collidepoint(screen.event.pos):
+                        screen.player1Selected = True
+                        screen.screen_status = "Game"
+                    elif player_buttons["player2"].collidepoint(screen.event.pos):
+                        screen.player2Selected = True
+                        screen.screen_status = "Game"
+
+                        
+                if screen.back_button_rect.collidepoint(screen.event.pos):
+                    screen.screen_status = "Start Screen"
+
+                    
+        if screen.screen_status == "Start Screen":
+            screen.splashScreen()
+        elif screen.screen_status == "How To Play Screen": 
+            screen.how_to_playScreen()
+        elif screen.screen_status == "Settings Screen":
+            screen.settingsScreen()
+        elif screen.screen_status == "Player Select":
+            screen.playerSelectScreen()
+        elif screen.screen_status == "Game":
+            if screen.controls == "WASD":
+                index_controls = 0
+            else:
+                index_controls = 1
+            for screen.event in pygame.event.get():
+                if screen.event.type == pygame.QUIT:
+                    screen.running = False
+            else:
+                keys = pygame.key.get_pressed()
+                control_keys = [[pygame.K_d, pygame.K_RIGHT], [pygame.K_a, pygame.K_LEFT], [pygame.K_w, pygame.K_UP], [pygame.K_s, pygame.K_DOWN], [pygame.K_p, pygame.K_q]]
+                player.movement(screen)
+                if keys[pygame.K_ESCAPE]:
+                    screen.screen_status = "Start Screen"
+                if keys[control_keys[2][index_controls]]:
+                    player.jumping = True
+                    player.idle = False
+                    player.punching = False
+                    player.rolling = False
+                elif keys[control_keys[3][index_controls]]:
+                    player.rolling = True
+                    player.idle = False
+                    player.punching = False
+                elif keys[control_keys[4][index_controls]]:
+                    player.punching = True
+                    player.rolling = False
+                    player.idle = False
+                    
+                if keys[control_keys[0][index_controls]]:
+                    player.walk_right = True
+                    if player.x_position > 250:
+                        screen.bg_x -= 5
+                    else:
+                        player.x_position += player.x_velocity
+                    player.walk_left = False
+                    player.idle = False
+                
+
+                elif keys[control_keys[1][index_controls]]:
+                    
+                    player.walk_left = True
+                    player.walk_right = False
+                    player.idle = False
+                    if player.x_position >= -0:
+                        player.x_position -= player.x_velocity
+                
+                else:
+                    player.walk_right = False
+                    player.walk_left = False
+                    player.rolling = False
+                    player.idle = True
+
+            screen.gameScreen()
+        
+        pygame.display.update()
+        
+    pygame.quit()    
+mainGame(screen)
+
+
+
